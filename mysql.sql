@@ -1,54 +1,65 @@
+-- Créer la base de données
+CREATE DATABASE InventaireDB;
+
+-- Utilisez cette base de données pour les opérations suivantes
+USE InventaireDB;
+
+-- Table des Fournisseurs
 CREATE TABLE Fournisseurs (
-    fournisseurID INT AUTO_INCREMENT PRIMARY KEY,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     nom VARCHAR(255) NOT NULL,
-    adresse VARCHAR(255),
-    telephone VARCHAR(20)
+    contact VARCHAR(255),
+    adresse TEXT
 );
 
+-- Table des Produits
 CREATE TABLE Produits (
-    produitID INT AUTO_INCREMENT PRIMARY KEY,
-    fournisseurID INT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     nom VARCHAR(255) NOT NULL,
     description TEXT,
     prix DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (fournisseurID) REFERENCES Fournisseurs(fournisseurID)
+    fournisseur_id INT,
+    FOREIGN KEY (fournisseur_id) REFERENCES Fournisseurs(id)
 );
 
+-- Table des Stocks
 CREATE TABLE Stock (
-    stockID INT AUTO_INCREMENT PRIMARY KEY,
-    produitID INT,
-    quantite INT NOT NULL,
-    FOREIGN KEY (produitID) REFERENCES Produits(produitID)
+    produit_id INT PRIMARY KEY,
+    quantite INT DEFAULT 0,
+    FOREIGN KEY (produit_id) REFERENCES Produits(id)
 );
 
-CREATE TABLE Client (
-    clientID INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(255) NOT NULL,
-    adresse VARCHAR(255),
-    telephone VARCHAR(20)
-);
-
-CREATE TABLE Commande (
-    commandeID INT AUTO_INCREMENT PRIMARY KEY,
-    clientID INT,
-    date DATE NOT NULL,
-    FOREIGN KEY (clientID) REFERENCES Client(clientID)
-);
-
+-- Table de l'Historique des Stocks
 CREATE TABLE Historique (
-    historiqueID INT AUTO_INCREMENT PRIMARY KEY,
-    produitID INT,
-    date DATE NOT NULL,
-    action VARCHAR(50) NOT NULL,
-    quantite INT NOT NULL,
-    FOREIGN KEY (produitID) REFERENCES Produits(produitID)
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    produit_id INT,
+    quantite_change INT NOT NULL,
+    date_change DATE NOT NULL,
+    FOREIGN KEY (produit_id) REFERENCES Produits(id)
 );
 
+-- Table des Clients
+CREATE TABLE Clients (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nom VARCHAR(255) NOT NULL,
+    adresse TEXT,
+    contact VARCHAR(255)
+);
+
+-- Table des Commandes
+CREATE TABLE Commandes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    client_id INT,
+    date_commande DATE NOT NULL,
+    FOREIGN KEY (client_id) REFERENCES Clients(id)
+);
+
+-- Table des Détails des Commandes
 CREATE TABLE DetailsCommande (
-    detailsCommandeID INT AUTO_INCREMENT PRIMARY KEY,
-    commandeID INT,
-    produitID INT,
+    commande_id INT,
+    produit_id INT,
     quantite INT NOT NULL,
-    FOREIGN KEY (commandeID) REFERENCES Commande(commandeID),
-    FOREIGN KEY (produitID) REFERENCES Produits(produitID)
+    PRIMARY KEY (commande_id, produit_id),
+    FOREIGN KEY (commande_id) REFERENCES Commandes(id),
+    FOREIGN KEY (produit_id) REFERENCES Produits(id)
 );
