@@ -98,16 +98,16 @@ def create(table):
     cur = mysql.connection.cursor()
     cur.execute(SCHEMAS[table]['mysql_insert'], tuple(item_info[field] for field in fields))
     mysql.connection.commit()
-    item_id = cur.lastrowid
+    #item_id = cur.lastrowid
     cur.close()
 
     # MongoDB Insertion
-    try:
-        item_info['_id'] = item_id
-        mongo_db[table].insert_one(item_info)
-    except Exception as e:
-        print("Error inserting into MongoDB:", e)
-        return jsonify({"message": "Error inserting into MongoDB"}), 500
+    #try:
+        #item_info['_id'] = item_id
+        #mongo_db[table].insert_one(item_info)
+    #except Exception as e:
+        #print("Error inserting into MongoDB:", e)
+        #return jsonify({"message": "Error inserting into MongoDB"}), 500
 
     return jsonify({"message": f"{table} ajouté avec succès!"}), 201
 
@@ -213,7 +213,7 @@ def update(table, id):
 
 
     # MongoDB Update
-    mongo_db[table].update_one({"_id": id}, {"$set": item_info})
+    #mongo_db[table].update_one({"_id": id}, {"$set": item_info})
 
     return jsonify({"message": f"{table} mis à jour avec succès!"}), 200
 
