@@ -115,7 +115,17 @@ def create_form(table_name, default_data=None):
     
     elif table_name == "Historique":
         form_data["ID_Produit"] = st.text_input("ID Produit", value=default_data.get("ID_Produit", ""))
-        form_data["Date"] = st.date_input("Date", value=default_data.get("Date", pd.to_datetime('today'))).strftime('%Y-%m-%d')
+        default_date = default_data.get("Date")
+        if isinstance(default_date, str):
+            try:
+                default_date = pd.to_datetime(default_date)
+            except:
+                default_date = pd.to_datetime('today')
+        elif default_date is None:
+            default_date = pd.to_datetime('today')
+
+        form_data["Date"] = st.date_input("Date", value=default_date).strftime('%Y-%m-%d')
+
         form_data["Action"] = st.radio("Action", ['Achat', 'Vente'], index=0 if default_data.get("Action", "") == "Achat" else 1)
         form_data["Quantité"] = st.text_input("Quantité", value=default_data.get("Quantité", ""))
     
@@ -138,9 +148,9 @@ def get_id_and_name_from_item(table_name, item):
     elif table_name == "Fournisseurs":
         return str(item["ID_Fournisseur"]), item["Nom_Fournisseur"]
     elif table_name == "Stock":
-        return str(item["ID_Stock"]), {item['Nom_Produit']}
+        return str(item["ID_Stock"]), {item['ID_Stock']}
     elif table_name == "Historique":
-        return str(item["ID_Historique"]), {item['Nom_Produit']}
+        return str(item["ID_Historique"]), {item['ID_Historique']}
     elif table_name == "Clients":
         return str(item["ID_Client"]), f"{item['Nom_Client']} {item['Prénom_Client']}"
     else:
@@ -148,15 +158,7 @@ def get_id_and_name_from_item(table_name, item):
 
 
 def main():
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
-    password = st.sidebar.text_input("Entrez le mot de passe:", type="password")
-    if password == "adminpass":
-        st.session_state.authenticated = True
-    if not st.session_state.authenticated:
-        st.warning("Veuillez vous authentifier pour accéder à l'interface.")
-        return
-
+   
     st.sidebar.header("Options 🛠️")
     table_choice = st.sidebar.selectbox("Tables", ["Produits", "Fournisseurs", "Stock", "Historique", "Clients"])
     operation_choice = st.sidebar.radio("Opérations", ["Dashboard", "Afficher", "Ajouter", "Modifier", "Supprimer"])
@@ -166,16 +168,31 @@ def main():
 
         items = get_items(table_choice)
         item_choices = [f"{get_id_and_name_from_item(table_choice, item)[0]} - {get_id_and_name_from_item(table_choice, item)[1]}" for item in items]
-        
+
         selected_item_desc = st.selectbox("Sélectionnez l'élément à modifier:", item_choices)
         selected_item_id = selected_item_desc.split(" - ")[0]
         item = get_single_item(table_choice, selected_item_id)
 
-        if item:
+        if table_choice in ["Stock", "Historique"]:
+            products = get_items("Produits")
+            product_choices = [f"{get_id_and_name_from_item('Produits', product)[0]} - {get_id_and_name_from_item('Produits', product)[1]}" for product in products]
+            selected_product_desc = st.selectbox("Sélectionnez un produit:", product_choices, index=product_choices.index(f"{item['ID_Produit']} - {item['Nom_Produit']}"))
+            selected_product_id = selected_product_desc.split(" - ")[0]
+            
+            # Passez la valeur de selected_product_id comme valeur par défaut pour le champ ID_Produit
+            data = create_form(table_choice, default_data={"ID_Produit": selected_product_id, **item})
+        else:
             data = create_form(table_choice, default_data=item)
-            if data:
-                response = update_item(table_choice, selected_item_id, data)
-                st.success(f"Élément modifié avec succès! Réponse: {response} ✅")
+
+        
+
+        if data:
+            # Supprimez le "Nom_Produit" du dictionnaire data avant de l'envoyer pour la mise à jour
+            data.pop("Nom_Produit", None)
+            response = update_item(table_choice, selected_item_id, data)
+            st.success(f"Élément modifié avec succès! Réponse: {response} ✅")
+
+
 
     elif operation_choice == "Supprimer":
         st.subheader(f"Suppression des éléments de {table_choice}")
